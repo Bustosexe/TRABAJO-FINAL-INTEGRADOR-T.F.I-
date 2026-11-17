@@ -89,9 +89,9 @@ Requisitos: SDK de .NET 10 y SQL Server (LocalDB alcanza).
 
 | Rol | Usuario | Contraseña |
 |---|---|---|
-| Administrador de plataforma | admin@stocksuper.com | _se entrega con el trabajo_ |
-| Dirección de empresa | director@demo.com | _se entrega con el trabajo_ |
-| Usuario de sucursal | sucursal202@demo.com | _se entrega con el trabajo_ |
+| Administrador de plataforma | admin@stocksuper.com | _Admin2026x1_ |
+| Dirección de empresa | director@demo.com | _Director20261_ |
+| Usuario de sucursal | sucursal202@demo.com | _Sucursal2026x_ |
 
 ## Seguridad
 
