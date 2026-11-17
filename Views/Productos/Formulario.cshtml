@@ -1,0 +1,89 @@
+﻿@model ProductoFormViewModel
+@{
+    var esNuevo = Model.Id == 0;
+    ViewData["Title"] = esNuevo ? "Nuevo producto" : "Editar producto";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">@ViewData["Title"]</h1>
+            <div class="ss-subtitulo">El producto describe el artículo. Las existencias y su ubicación se registran en los pallets.</div>
+        </div>
+
+        <div class="ss-panel">
+            <div class="p-4">
+                @* enctype multipart: necesario para enviar el archivo de imagen *@
+                <form asp-action="@(esNuevo ? "Crear" : "Editar")" asp-route-id="@(esNuevo ? null : Model.Id)"
+                      method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="CodigoSku" class="form-label"></label>
+                            <input asp-for="CodigoSku" class="form-control" autofocus />
+                            <span asp-validation-for="CodigoSku" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="Nombre" class="form-label"></label>
+                            <input asp-for="Nombre" class="form-control" />
+                            <span asp-validation-for="Nombre" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Descripcion" class="form-label"></label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="CategoriaId" class="form-label"></label>
+                            <select asp-for="CategoriaId" asp-items="Model.Categorias" class="form-select">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="MarcaId" class="form-label"></label>
+                            <select asp-for="MarcaId" asp-items="Model.Marcas" class="form-select">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="MarcaId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="ProveedorId" class="form-label"></label>
+                            <select asp-for="ProveedorId" asp-items="Model.Proveedores" class="form-select">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="ProveedorId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="PrecioVenta" class="form-label"></label>
+                            <input asp-for="PrecioVenta" class="form-control" inputmode="decimal" />
+                            <span asp-validation-for="PrecioVenta" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="StockMinimo" class="form-label"></label>
+                            <input asp-for="StockMinimo" class="form-control" inputmode="numeric" />
+                            <div class="form-text">Por debajo de este total el producto figura como crítico.</div>
+                            <span asp-validation-for="StockMinimo" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (!esNuevo && ViewData["Pie"] is PieAuditoriaViewModel pie)
+        {
+            <partial name="_PieAuditoria" model="pie" />
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

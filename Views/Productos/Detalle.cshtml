@@ -1,0 +1,105 @@
+﻿@model ProductoDetalleViewModel
+@{
+    var p = Model.Producto;
+    ViewData["Title"] = p.Nombre;
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+    var hoy = FormatoFecha.HoyArgentina;
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">@p.Nombre</h1>
+        <div class="ss-subtitulo">SKU @p.CodigoSku</div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (esDirector)
+        {
+            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-primary">Editar</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="ss-panel h-100">
+            <div class="ss-panel-titulo">Datos del producto</div>
+            <div class="p-3 d-flex gap-3 flex-wrap">
+                <dl class="row mb-0 flex-grow-1">
+                    <dt class="col-sm-4">Categoría</dt><dd class="col-sm-8">@p.Categoria?.Nombre</dd>
+                    <dt class="col-sm-4">Marca</dt><dd class="col-sm-8">@p.Marca?.Nombre</dd>
+                    <dt class="col-sm-4">Proveedor</dt><dd class="col-sm-8">@p.Proveedor?.RazonSocial</dd>
+                    <dt class="col-sm-4">Precio de venta</dt><dd class="col-sm-8">@p.PrecioVenta.ToString("C2")</dd>
+                    <dt class="col-sm-4">Stock mínimo</dt><dd class="col-sm-8">@p.StockMinimo.ToString("N0")</dd>
+                    <dt class="col-sm-4">Estado</dt>
+                    <dd class="col-sm-8">
+                        <span class="ss-estado @(p.Activo ? "ss-estado-activo" : "ss-estado-inactivo")">@(p.Activo ? "Activo" : "Dado de baja")</span>
+                    </dd>
+                    @if (!string.IsNullOrEmpty(p.Descripcion))
+                    {
+                        <dt class="col-sm-4">Descripción</dt><dd class="col-sm-8 mb-0">@p.Descripcion</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="ss-indicador @(Model.StockTotal < p.StockMinimo ? "ss-indicador-alerta" : "")">
+            <div class="ss-indicador-valor">@Model.StockTotal.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Unidades en stock (mínimo @p.StockMinimo.ToString("N0"))</div>
+        </div>
+    </div>
+</div>
+
+<div class="ss-panel">
+    <div class="ss-panel-titulo">Pallets con existencia</div>
+    <div class="table-responsive">
+        <table class="table ss-tabla mb-0">
+            <thead>
+                <tr>
+                    <th>Sucursal</th><th>Pallet</th><th>Ubicación en depósito</th>
+                    <th class="text-end">Cantidad</th><th>Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var pallet in Model.Pallets)
+            {
+                <tr>
+                    <td>@pallet.Sucursal</td>
+                    <td>@pallet.CodigoPallet</td>
+                    <td>
+                        @pallet.Sector
+                        @if (!string.IsNullOrEmpty(pallet.Pasillo)) { <text> - Pasillo @pallet.Pasillo</text> }
+                        @if (!string.IsNullOrEmpty(pallet.Estante)) { <text> - Estante @pallet.Estante</text> }
+                    </td>
+                    <td class="text-end">@pallet.CantidadActual.ToString("N0")</td>
+                    <td>
+                        @if (pallet.FechaVencimiento.HasValue)
+                        {
+                            @pallet.FechaVencimiento.Value.ToString("dd/MM/yyyy")
+                            @if (pallet.FechaVencimiento.Value < hoy)
+                            {
+                                <span class="ss-estado ss-estado-critico ms-1">Vencido</span>
+                            }
+                            else if (pallet.FechaVencimiento.Value <= hoy.AddDays(30))
+                            {
+                                <span class="ss-estado ss-estado-alerta ms-1">Por vencer</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="ss-subtitulo">No aplica</span>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Pallets.Any())
+            {
+                <tr><td colspan="5" class="text-center ss-subtitulo py-4">No hay pallets con existencia de este producto.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_PieAuditoria" model="Model.Auditoria" />

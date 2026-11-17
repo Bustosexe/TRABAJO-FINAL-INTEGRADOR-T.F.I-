@@ -1,0 +1,51 @@
+﻿@model CuentaEditarViewModel
+@{
+    ViewData["Title"] = "Editar cuenta";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">Editar cuenta</h1>
+            <div class="ss-subtitulo">
+                La empresa y el alcance quedan fijos desde el alta. Si cambia el correo, la cuenta deberá ingresar con el nuevo.
+            </div>
+        </div>
+
+        <div class="ss-panel">
+            <div class="p-4">
+                <dl class="row mb-4">
+                    <dt class="col-sm-4">Empresa</dt>
+                    <dd class="col-sm-8">@Model.EmpresaNombre</dd>
+                    <dt class="col-sm-4">Alcance</dt>
+                    <dd class="col-sm-8 mb-0">@Model.Alcance</dd>
+                </dl>
+
+                <form asp-action="Editar" asp-route-id="@Model.Id" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" type="email" autofocus />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="NombreCuenta" class="form-label"></label>
+                        <input asp-for="NombreCuenta" class="form-control" />
+                        <span asp-validation-for="NombreCuenta" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

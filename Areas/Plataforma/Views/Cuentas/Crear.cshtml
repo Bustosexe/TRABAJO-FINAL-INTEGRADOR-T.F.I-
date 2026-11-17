@@ -1,0 +1,106 @@
+﻿@model CuentaCrearViewModel
+@{
+    ViewData["Title"] = "Nueva cuenta";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">Nueva cuenta de acceso</h1>
+            <div class="ss-subtitulo">
+                El sistema genera una contraseña temporal. La cuenta deberá cambiarla en su primer ingreso.
+            </div>
+        </div>
+
+        <div class="ss-panel">
+            <div class="p-4">
+                <form asp-action="Crear" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="EmpresaId" class="form-label"></label>
+                            <select asp-for="EmpresaId" asp-items="Model.Empresas" class="form-select" autofocus>
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="EmpresaId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Tipo" class="form-label"></label>
+                            <select asp-for="Tipo" class="form-select">
+                                <option value="@TiposCuenta.Direccion">Dirección (ve todas las sucursales)</option>
+                                <option value="@TiposCuenta.Sucursal">Sucursal (opera solo la suya)</option>
+                            </select>
+                            <span asp-validation-for="Tipo" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12" id="bloqueSucursal">
+                            <label asp-for="SucursalId" class="form-label"></label>
+                            <select asp-for="SucursalId" class="form-select">
+                                <option value="">Seleccione...</option>
+                                @foreach (var s in Model.Sucursales)
+                                {
+                                    <option value="@s.Id" data-empresa="@s.EmpresaId">@s.Texto</option>
+                                }
+                            </select>
+                            <div class="form-text">La sucursal queda fija: la cuenta no puede cambiarla ni ver el stock de otra.</div>
+                            <span asp-validation-for="SucursalId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" type="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NombreCuenta" class="form-label"></label>
+                            <input asp-for="NombreCuenta" class="form-control" />
+                            <div class="form-text">Opcional. Si lo deja vacío se arma con la empresa y la sucursal.</div>
+                            <span asp-validation-for="NombreCuenta" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Crear cuenta</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Ayudas del formulario (el servidor repite todas las validaciones):
+        // la sucursal solo se pide para cuentas de sucursal y se filtra por la empresa elegida.
+        const selectorEmpresa = document.getElementById('EmpresaId');
+        const selectorTipo = document.getElementById('Tipo');
+        const selectorSucursal = document.getElementById('SucursalId');
+        const bloqueSucursal = document.getElementById('bloqueSucursal');
+
+        function actualizarSucursales() {
+            const esSucursal = selectorTipo.value === 'sucursal';
+            bloqueSucursal.classList.toggle('d-none', !esSucursal);
+            if (!esSucursal) { selectorSucursal.value = ''; return; }
+
+            const empresa = selectorEmpresa.value;
+            Array.from(selectorSucursal.options).forEach(function (opcion) {
+                if (!opcion.value) return;
+                const aplica = empresa !== '' && opcion.dataset.empresa === empresa;
+                opcion.hidden = !aplica;
+                opcion.disabled = !aplica;
+            });
+
+            const elegida = selectorSucursal.selectedOptions[0];
+            if (elegida && elegida.disabled) selectorSucursal.value = '';
+        }
+
+        selectorEmpresa.addEventListener('change', actualizarSucursales);
+        selectorTipo.addEventListener('change', actualizarSucursales);
+        actualizarSucursales();
+    </script>
+}

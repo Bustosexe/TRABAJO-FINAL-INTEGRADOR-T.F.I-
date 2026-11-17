@@ -1,0 +1,75 @@
+﻿@* Diseño de las pantallas de acceso (sin sesión iniciada): panel institucional a la
+   izquierda y formulario a la derecha. En pantallas chicas solo se ve el formulario. *@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - StockSuper</title>
+    <link rel="icon" type="image/svg+xml" href="~/img/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="ss-acceso-pagina">
+        <section class="ss-acceso-marca">
+            <div class="ss-acceso-logo-fila">
+                <partial name="_LogoMarca" />
+                <div>
+                    <div class="ss-acceso-logo">Stock<span class="ss-marca-ligero">Super</span></div>
+                    <span class="ss-acceso-logo-detalle">Control de stock y proveedores</span>
+                </div>
+            </div>
+
+            <div class="ss-acceso-mensaje">
+                <h2>Inventario de supermercados, bajo control en cada sucursal.</h2>
+                <ul class="ss-acceso-puntos">
+                    <li>
+                        <strong>Stock por pallet y sucursal</strong>
+                        Cada entrada y cada salida de mercadería queda registrada y conciliada.
+                    </li>
+                    <li>
+                        <strong>Vencimientos y stock mínimo</strong>
+                        Alertas anticipadas para actuar antes de que la mercadería se pierda.
+                    </li>
+                    <li>
+                        <strong>Trazabilidad completa</strong>
+                        Se registra qué usuario realizó cada operación y en qué momento.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="ss-acceso-legal">Acceso exclusivo para clientes con cuenta habilitada.</div>
+        </section>
+
+        <main class="ss-acceso-formulario" role="main">
+            <div class="ss-acceso-caja">
+                <div class="ss-acceso-marca-movil">
+                    <partial name="_LogoMarca" />
+                    <div>
+                        Stock<span class="ss-marca-ligero">Super</span>
+                        <small>Control de stock y proveedores</small>
+                    </div>
+                </div>
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    @* Mensajes de resultado (TempData) leídos por site.js *@
+    <div id="ss-mensajes" hidden
+         data-exito="@TempData["Exito"]"
+         data-error="@TempData["Error"]"></div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

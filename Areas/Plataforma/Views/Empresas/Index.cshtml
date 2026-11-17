@@ -1,0 +1,99 @@
+﻿@model IEnumerable<Empresa>
+@{
+    ViewData["Title"] = "Empresas";
+    var usuarios = (Dictionary<string, string>)ViewData["Usuarios"]!;
+    var sucursales = (Dictionary<int, int>)ViewData["Sucursales"]!;
+    var cuentas = (Dictionary<int, int>)ViewData["Cuentas"]!;
+    var buscar = ViewData["Buscar"] as string;
+    var estado = ViewData["Estado"] as string;
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Empresas</h1>
+        <div class="ss-subtitulo">Clientes con contrato. No se eliminan: se suspenden y se reactivan.</div>
+    </div>
+    <a asp-action="Crear" class="btn btn-primary">Nueva empresa</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-lg-4">
+        <input name="buscar" value="@buscar" class="form-control" placeholder="Buscar por razón social o CUIT" />
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <select name="estado" class="form-select">
+            <option value="" selected="@(string.IsNullOrEmpty(estado))">Todas</option>
+            <option value="activas" selected="@(estado == "activas")">Activas</option>
+            <option value="suspendidas" selected="@(estado == "suspendidas")">Suspendidas</option>
+        </select>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        @if (!string.IsNullOrWhiteSpace(buscar) || !string.IsNullOrEmpty(estado))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Razón social</th>
+                    <th>CUIT</th>
+                    <th>Contacto</th>
+                    <th>Contrato</th>
+                    <th>Estado</th>
+                    <th class="text-end">Sucursales</th>
+                    <th class="text-end">Cuentas</th>
+                    <th>Última acción</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@e.RazonSocial</td>
+                        <td>@e.Cuit</td>
+                        <td>
+                            @e.Telefono
+                            @if (!string.IsNullOrEmpty(e.Email))
+                            {
+                                <div class="small ss-subtitulo">@e.Email</div>
+                            }
+                        </td>
+                        <td>@(e.FechaContrato?.ToString("dd/MM/yyyy") ?? "Sin dato")</td>
+                        <td>
+                            <span class="ss-estado @(e.Activa ? "ss-estado-activo" : "ss-estado-critico")">
+                                @(e.Activa ? "Activa" : "Suspendida")
+                            </span>
+                        </td>
+                        <td class="text-end">@(sucursales.TryGetValue(e.Id, out var totalSucursales) ? totalSucursales : 0)</td>
+                        <td class="text-end">@(cuentas.TryGetValue(e.Id, out var totalCuentas) ? totalCuentas : 0)</td>
+                        <td class="ss-auditoria">@ServicioAuditoria.UltimaAccion(e, usuarios)</td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <a asp-controller="Sucursales" asp-action="Index" asp-route-empresaId="@e.Id" class="btn btn-sm btn-outline-primary">Sucursales</a>
+                                <a asp-controller="Cuentas" asp-action="Index" asp-route-empresaId="@e.Id" class="btn btn-sm btn-outline-primary">Cuentas</a>
+                                <a asp-action="Editar" asp-route-id="@e.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <form asp-action="CambiarEstado" asp-route-id="@e.Id" method="post"
+                                      data-titulo="@(e.Activa ? "Suspender empresa" : "Reactivar empresa")"
+                                      data-confirmar="@(e.Activa ? $"Todas las cuentas de '{e.RazonSocial}' dejarán de poder ingresar y sus sesiones abiertas se cerrarán. Los datos se conservan." : $"Las cuentas de '{e.RazonSocial}' podrán volver a ingresar.")"
+                                      data-si="@(e.Activa ? "Suspender" : "Reactivar")">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">@(e.Activa ? "Suspender" : "Reactivar")</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="9" class="text-center ss-subtitulo py-4">No hay empresas para mostrar.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

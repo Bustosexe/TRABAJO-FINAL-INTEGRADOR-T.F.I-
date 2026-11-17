@@ -1,0 +1,111 @@
+﻿@model PalletDetalleViewModel
+@{
+    var p = Model.Pallet;
+    ViewData["Title"] = "Pallet " + p.CodigoPallet;
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+    var hoy = FormatoFecha.HoyArgentina;
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Pallet @p.CodigoPallet</h1>
+        <div class="ss-subtitulo">@p.Producto?.Nombre - SKU @p.Producto?.CodigoSku</div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (!esDirector)
+        {
+            <a asp-controller="Movimientos" asp-action="Registrar" asp-route-palletId="@p.Id" class="btn btn-primary">Registrar movimiento</a>
+            <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-outline-primary">Editar</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="ss-panel h-100">
+            <div class="ss-panel-titulo">Datos del pallet</div>
+            <dl class="row mb-0 p-3">
+                <dt class="col-sm-4">Sucursal</dt><dd class="col-sm-8">@p.Sucursal?.Nombre</dd>
+                <dt class="col-sm-4">Ubicación</dt>
+                <dd class="col-sm-8">
+                    @p.SectorDeposito?.NombreSector
+                    @if (!string.IsNullOrEmpty(p.SectorDeposito?.Pasillo)) { <text> - Pasillo @p.SectorDeposito.Pasillo</text> }
+                    @if (!string.IsNullOrEmpty(p.SectorDeposito?.Estante)) { <text> - Estante @p.SectorDeposito.Estante</text> }
+                </dd>
+                <dt class="col-sm-4">Lote del proveedor</dt><dd class="col-sm-8">@(string.IsNullOrEmpty(p.CodigoLote) ? "Sin dato" : p.CodigoLote)</dd>
+                <dt class="col-sm-4">Remito</dt>
+                <dd class="col-sm-8">
+                    @if (!string.IsNullOrEmpty(p.RemitoRuta))
+                    {
+                        <a asp-action="Remito" asp-route-id="@p.Id" target="_blank" rel="noopener noreferrer">@(p.RemitoNombreOriginal ?? "Ver remito (PDF)")</a>
+                    }
+                    else
+                    {
+                        <text>Sin remito</text>
+                    }
+                </dd>
+                <dt class="col-sm-4">Precio de compra</dt><dd class="col-sm-8">@p.PrecioCompra.ToString("C2") por unidad</dd>
+                <dt class="col-sm-4">Elaboración</dt><dd class="col-sm-8">@(p.FechaElaboracion?.ToString("dd/MM/yyyy") ?? "Sin dato")</dd>
+                <dt class="col-sm-4">Vencimiento</dt>
+                <dd class="col-sm-8 mb-0">
+                    @if (p.FechaVencimiento.HasValue)
+                    {
+                        @p.FechaVencimiento.Value.ToString("dd/MM/yyyy")
+                        @if (p.CantidadActual > 0 && p.FechaVencimiento.Value < hoy)
+                        {
+                            <span class="ss-estado ss-estado-critico ms-1">Vencido</span>
+                        }
+                        else if (p.CantidadActual > 0 && p.FechaVencimiento.Value <= hoy.AddDays(30))
+                        {
+                            <span class="ss-estado ss-estado-alerta ms-1">Por vencer</span>
+                        }
+                    }
+                    else
+                    {
+                        <text>No aplica</text>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="ss-indicador h-100">
+            <div class="ss-indicador-valor">@p.CantidadActual.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Unidades actuales (ingresaron @p.CantidadInicial.ToString("N0"))</div>
+        </div>
+    </div>
+</div>
+
+<div class="ss-panel">
+    <div class="ss-panel-titulo">Historial de movimientos</div>
+    <div class="table-responsive">
+        <table class="table ss-tabla mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th><th>Tipo</th><th>Motivo</th>
+                    <th class="text-end">Cantidad</th><th>Observación</th><th>Registrado por</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in Model.Movimientos)
+            {
+                <tr>
+                    <td>@m.FechaMovimiento.AHoraArgentina().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@m.Tipo.Etiqueta()</td>
+                    <td>@m.Motivo.Etiqueta()</td>
+                    <td class="text-end">@(m.Tipo == StockSuper.Models.Enums.TipoMovimiento.Entrada ? "+" : "-")@m.Cantidad.ToString("N0")</td>
+                    <td>@m.Observacion</td>
+                    <td class="ss-auditoria">@m.Cuenta</td>
+                </tr>
+            }
+            @if (!Model.Movimientos.Any())
+            {
+                <tr><td colspan="6" class="text-center ss-subtitulo py-4">Este pallet no tiene movimientos.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_PieAuditoria" model="Model.Auditoria" />

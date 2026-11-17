@@ -1,0 +1,20 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="ss-panel">
+            <div class="ss-panel-titulo">Se produjo un error</div>
+            <div class="p-4">
+                <p>No pudimos completar la operación. Intente nuevamente y, si el problema continúa, informe al administrador.</p>
+                @if (Model.ShowRequestId)
+                {
+                    <p class="small ss-subtitulo mb-3">Código de referencia: <code>@Model.RequestId</code></p>
+                }
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Volver al inicio</a>
+            </div>
+        </div>
+    </div>
+</div>

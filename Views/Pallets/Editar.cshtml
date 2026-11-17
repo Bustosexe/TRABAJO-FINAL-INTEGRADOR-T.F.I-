@@ -1,0 +1,93 @@
+﻿@model PalletEdicionViewModel
+@{
+    ViewData["Title"] = "Editar pallet";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">Editar pallet @Model.CodigoPallet</h1>
+            <div class="ss-subtitulo">
+                Solo se corrige la ubicación, el lote y las fechas. Para cambiar la cantidad se registra un movimiento de stock.
+            </div>
+        </div>
+
+        <div class="ss-panel">
+            <div class="p-4">
+                <dl class="row mb-4">
+                    <dt class="col-sm-4">Producto</dt><dd class="col-sm-8">@Model.ProductoNombre</dd>
+                    <dt class="col-sm-4">Cantidad actual</dt><dd class="col-sm-8 mb-0">@Model.CantidadActual.ToString("N0") unidades</dd>
+                </dl>
+
+                <form asp-action="Editar" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label asp-for="SectorDepositoId" class="form-label"></label>
+                            <select asp-for="SectorDepositoId" asp-items="Model.Sectores" class="form-select">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="SectorDepositoId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label asp-for="CodigoLote" class="form-label"></label>
+                            <input asp-for="CodigoLote" class="form-control" />
+                            <span asp-validation-for="CodigoLote" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="FechaElaboracion" class="form-label"></label>
+                            <input asp-for="FechaElaboracion" class="form-control" />
+                            <span asp-validation-for="FechaElaboracion" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="FechaVencimiento" class="form-label"></label>
+                            <input asp-for="FechaVencimiento" class="form-control" />
+                            @if (Model.ExigeVencimiento)
+                            {
+                                <div class="form-text">Este producto es perecedero: el vencimiento es obligatorio.</div>
+                            }
+                            <span asp-validation-for="FechaVencimiento" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="RemitoArchivo" class="form-label"></label>
+                            @if (!string.IsNullOrEmpty(Model.RemitoNombre))
+                            {
+                                <div class="mb-2">
+                                    Remito actual:
+                                    <a asp-action="Remito" asp-route-id="@Model.Id" target="_blank" rel="noopener noreferrer">@Model.RemitoNombre</a>
+                                </div>
+                            }
+                            <input asp-for="RemitoArchivo" type="file" class="form-control"
+                                   accept=".pdf,application/pdf" data-adjunto-pdf />
+                            <div class="form-text">Opcional. Archivo PDF, máximo 5 MB. Si adjunta uno nuevo, reemplaza al actual.</div>
+                            <span asp-validation-for="RemitoArchivo" class="text-danger"></span>
+                            @if (!string.IsNullOrEmpty(Model.RemitoNombre))
+                            {
+                                <div class="form-check mt-2">
+                                    <input asp-for="QuitarRemito" class="form-check-input" />
+                                    <label asp-for="QuitarRemito" class="form-check-label"></label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <a asp-action="Detalle" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (ViewData["Pie"] is PieAuditoriaViewModel pie)
+        {
+            <partial name="_PieAuditoria" model="pie" />
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/adjunto-pdf.js" asp-append-version="true"></script>
+}

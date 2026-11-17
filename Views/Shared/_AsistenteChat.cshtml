@@ -1,0 +1,50 @@
+﻿@{
+    // asp-area vacío: el chat funciona igual desde cualquier pantalla
+    var urlConsulta = Url.Action("Consultar", "Asistente", new { area = "" });
+    var esDireccion = User.IsInRole(Roles.DirectorEmpresa);
+}
+
+@* Chat asistente con IA: ventana flotante en la esquina inferior derecha.
+   El comportamiento está en wwwroot/js/asistente.js. *@
+<div class="ss-chat" id="ssChat" data-url="@urlConsulta">
+    <button type="button" class="btn btn-primary ss-chat-boton" id="ssChatBoton" aria-controls="ssChatPanel" aria-expanded="false">
+        Asistente
+    </button>
+
+    <section class="ss-chat-panel d-none" id="ssChatPanel" aria-label="Asistente de stock">
+        <header class="ss-chat-encabezado">
+            <div>
+                <div class="fw-semibold">Asistente de stock</div>
+                <div class="ss-chat-bajada">Consultas sobre su inventario y el uso del sistema</div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-light" id="ssChatNueva">Nueva consulta</button>
+                <button type="button" class="btn-close btn-close-white" id="ssChatCerrar" aria-label="Cerrar el asistente"></button>
+            </div>
+        </header>
+
+        <div class="ss-chat-mensajes" id="ssChatMensajes" aria-live="polite"></div>
+
+        <div class="ss-chat-sugerencias" id="ssChatSugerencias">
+            <button type="button" class="btn btn-sm btn-outline-primary" data-sugerencia="¿Qué productos están bajo el stock mínimo?">Productos bajo el mínimo</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-sugerencia="¿Qué pallets vencen pronto y qué conviene hacer con ellos?">Próximos vencimientos</button>
+            @if (esDireccion)
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary" data-sugerencia="¿Cómo le pido reposición a un proveedor?">Pedir reposición</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary" data-sugerencia="¿Cómo registro una salida de mercadería?">Registrar una salida</button>
+            }
+        </div>
+
+        <form class="ss-chat-form" id="ssChatForm" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <input type="text" class="form-control" id="ssChatEntrada" maxlength="500"
+                   placeholder="Escriba su consulta" aria-label="Consulta para el asistente" />
+            <button type="submit" class="btn btn-primary" id="ssChatEnviar">Enviar</button>
+        </form>
+
+        <div class="ss-chat-nota">Respuestas generadas con IA. Verifique los datos en las pantallas del sistema.</div>
+    </section>
+</div>

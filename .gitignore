@@ -1,0 +1,25 @@
+# Compilación y archivos de Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Configuración con datos sensibles: nunca se sube al repositorio.
+# Las claves viven en User Secrets (desarrollo) o en la configuración del servidor (producción).
+appsettings.Production.json
+appsettings.*.local.json
+secrets.json
+*.pubxml
+*.pubxml.user
+Properties/PublishProfiles/
+
+# Archivos subidos por los usuarios (imágenes y remitos privados) y base de datos local
+wwwroot/uploads/
+App_Data/
+*.db
+*.mdf
+*.ldf
+
+# Publicación
+publish/

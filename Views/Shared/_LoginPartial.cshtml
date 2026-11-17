@@ -1,0 +1,52 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using StockSuper.Models
+@inject SignInManager<ApplicationUser> SignInManager
+
+@* Menú de la cuenta activa (barra superior). No hay enlace de registro: las cuentas
+   las crea el administrador. asp-area vacío: los enlaces apuntan al área raíz aunque
+   se vean desde Plataforma. El cierre de sesión queda aquí, detrás del menú, con
+   confirmación mediante SweetAlert2. *@
+@{
+    var nombre = User.FindFirst(NombresClaim.NombreCuenta)?.Value ?? User.Identity?.Name ?? string.Empty;
+    var rol = User.IsInRole(Roles.AdministradorPlataforma) ? "Administrador de plataforma"
+            : User.IsInRole(Roles.DirectorEmpresa) ? "Dirección de empresa"
+            : User.IsInRole(Roles.UsuarioSucursal) ? "Usuario de sucursal"
+            : string.Empty;
+    var iniciales = string.Concat(nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0])));
+    if (iniciales.Length == 0) { iniciales = "?"; }
+}
+<div class="dropdown">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <button class="ss-cuenta-boton dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="ss-iniciales">@iniciales</span>
+            <span class="ss-cuenta-datos">
+                <span class="ss-cuenta-nombre">@nombre</span>
+                <span class="ss-cuenta-rol">@rol</span>
+            </span>
+            <span class="visually-hidden">Mi cuenta</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li class="dropdown-header-cuenta">
+                <div class="fw-semibold">@nombre</div>
+                <div class="small ss-subtitulo">@rol</div>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-area="" asp-controller="Cuenta" asp-action="CambiarPassword">Cambiar contraseña</a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                <form method="post" asp-area="" asp-controller="Cuenta" asp-action="CerrarSesion"
+                      data-titulo="Cerrar sesión"
+                      data-confirmar="Se cerrará la sesión en este equipo. Para volver a ingresar necesitará el correo y la contraseña de la cuenta."
+                      data-si="Cerrar sesión">
+                    <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                </form>
+            </li>
+        </ul>
+    }
+    else
+    {
+        <a class="btn btn-primary btn-sm" asp-area="" asp-controller="Cuenta" asp-action="Login">Iniciar sesión</a>
+    }
+</div>

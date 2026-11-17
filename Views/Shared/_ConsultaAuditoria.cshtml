@@ -1,0 +1,111 @@
+﻿@using StockSuper.Models.Enums
+@model AuditoriaViewModel
+@{
+    // Valores preparados aquí para no anidar comillas dentro de los atributos HTML
+    var desdeTexto = Model.Desde?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var hastaTexto = Model.Hasta?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var hayFiltros = Model.Desde.HasValue || Model.Hasta.HasValue || !string.IsNullOrWhiteSpace(Model.Buscar)
+        || Model.Ambito.HasValue || Model.EmpresaId.HasValue;
+    var columnas = Model.MostrarEmpresa ? 8 : 7;
+}
+
+@* Filtros y tabla de la bitácora. Compartida por la auditoría del administrador y la de la Dirección. *@
+<div class="mb-3">
+    <h1 class="ss-titulo mb-1">@Model.Titulo</h1>
+    <div class="ss-subtitulo">@Model.Subtitulo</div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-lg-2">
+        <label class="form-label small mb-0">Desde</label>
+        <input type="date" name="desde" value="@desdeTexto" class="form-control" />
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <label class="form-label small mb-0">Hasta</label>
+        <input type="date" name="hasta" value="@hastaTexto" class="form-control" />
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <label class="form-label small mb-0">Tipo</label>
+        <select name="ambito" class="form-select">
+            <option value="">Todos</option>
+            @foreach (var opcion in Model.Ambitos)
+            {
+                <option value="@opcion.Valor" selected="@(Model.Ambito == opcion.Valor)">@opcion.Texto</option>
+            }
+        </select>
+    </div>
+    @if (Model.MostrarEmpresa)
+    {
+        <div class="col-sm-6 col-lg-2">
+            <label class="form-label small mb-0">Empresa</label>
+            <select name="empresaId" class="form-select" asp-items="Model.Empresas">
+                <option value="">Todas</option>
+            </select>
+        </div>
+    }
+    <div class="col-sm-6 col-lg-3">
+        <label class="form-label small mb-0">Buscar</label>
+        <input name="buscar" value="@Model.Buscar" class="form-control" placeholder="Cuenta, acción o detalle" />
+    </div>
+    <div class="col-auto d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        @if (hayFiltros)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Cuenta</th>
+                    @if (Model.MostrarEmpresa) { <th>Empresa</th> }
+                    <th>Tipo</th>
+                    <th>Acción</th>
+                    <th>Sobre</th>
+                    <th>Detalle</th>
+                    <th>Origen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model.Filas)
+                {
+                    <tr>
+                        <td class="text-nowrap">@f.FechaUtc.AHoraArgentina().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@f.Cuenta</td>
+                        @if (Model.MostrarEmpresa)
+                        {
+                            <td>
+                                @f.Empresa
+                                @if (!string.IsNullOrEmpty(f.Sucursal)) { <div class="small ss-subtitulo">@f.Sucursal</div> }
+                            </td>
+                        }
+                        <td>@EtiquetasAuditoria.Ambito(f.Ambito)</td>
+                        <td class="fw-semibold">@f.Accion</td>
+                        <td>
+                            @f.Entidad
+                            @if (!Model.MostrarEmpresa && !string.IsNullOrEmpty(f.Sucursal)) { <div class="small ss-subtitulo">@f.Sucursal</div> }
+                        </td>
+                        <td>@f.Detalle</td>
+                        <td class="ss-auditoria">@f.Direccion</td>
+                    </tr>
+                }
+                @if (!Model.Filas.Any())
+                {
+                    <tr><td colspan="@columnas" class="text-center ss-subtitulo py-4">No hay eventos para los filtros elegidos.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (Model.Total > Model.Maximo)
+{
+    <div class="small ss-subtitulo mt-2">
+        Se muestran los últimos @Model.Maximo de @Model.Total.ToString("N0") eventos. Use los filtros para acotar el resultado.
+    </div>
+}

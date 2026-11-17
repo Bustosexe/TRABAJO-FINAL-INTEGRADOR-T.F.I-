@@ -1,0 +1,78 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2102 >>
+stream
+0.7 w 45 660 m 545 660 l S 45 645 m 545 645 l S 45 535 m 545 535 l S
+BT /F2 22 Tf 50 790 Td (REMITO) Tj ET
+BT /F2 12 Tf 400 790 Td (N° 0001-00012345) Tj ET
+BT /F1 10 Tf 400 774 Td (Fecha: 14/11/2026) Tj ET
+BT /F1 9 Tf 50 770 Td (Documento de prueba - datos ficticios) Tj ET
+BT /F2 10 Tf 50 735 Td (Proveedor) Tj ET
+BT /F1 11 Tf 50 720 Td (Distribuidora Demo S.A.) Tj ET
+BT /F1 10 Tf 50 706 Td (CUIT 30-71234567-8) Tj ET
+BT /F1 10 Tf 50 692 Td (Av. Ejemplo 1234 - Santa Rosa, La Pampa) Tj ET
+BT /F2 10 Tf 330 735 Td (Destinatario) Tj ET
+BT /F1 11 Tf 330 720 Td (Supermercados Demo S.A.) Tj ET
+BT /F1 10 Tf 330 706 Td (Sucursal 202) Tj ET
+BT /F1 10 Tf 330 692 Td (Calle Pellegrini 850 - Santa Rosa, La Pampa) Tj ET
+BT /F2 10 Tf 50 650 Td (Código) Tj ET
+BT /F2 10 Tf 110 650 Td (Descripción) Tj ET
+BT /F2 10 Tf 330 650 Td (Bultos) Tj ET
+BT /F2 10 Tf 400 650 Td (Unidades) Tj ET
+BT /F2 10 Tf 470 650 Td (Lote) Tj ET
+BT /F1 10 Tf 50 628 Td (LAC-0001) Tj ET
+BT /F1 10 Tf 110 628 Td (Leche entera 1 L \(caja x12\)) Tj ET
+BT /F1 10 Tf 330 628 Td (40) Tj ET
+BT /F1 10 Tf 400 628 Td (480) Tj ET
+BT /F1 10 Tf 470 628 Td (L2411A) Tj ET
+BT /F1 10 Tf 50 606 Td (LAC-0007) Tj ET
+BT /F1 10 Tf 110 606 Td (Yogur firme vainilla 190 g) Tj ET
+BT /F1 10 Tf 330 606 Td (25) Tj ET
+BT /F1 10 Tf 400 606 Td (600) Tj ET
+BT /F1 10 Tf 470 606 Td (L2411B) Tj ET
+BT /F1 10 Tf 50 584 Td (ALM-0102) Tj ET
+BT /F1 10 Tf 110 584 Td (Arroz largo fino 1 kg) Tj ET
+BT /F1 10 Tf 330 584 Td (30) Tj ET
+BT /F1 10 Tf 400 584 Td (360) Tj ET
+BT /F1 10 Tf 470 584 Td (L2410C) Tj ET
+BT /F1 10 Tf 50 562 Td (LIM-0045) Tj ET
+BT /F1 10 Tf 110 562 Td (Lavandina 2 L \(caja x6\)) Tj ET
+BT /F1 10 Tf 330 562 Td (20) Tj ET
+BT /F1 10 Tf 400 562 Td (120) Tj ET
+BT /F1 10 Tf 470 562 Td (L2409D) Tj ET
+BT /F2 10 Tf 330 532 Td (Total de bultos: 115) Tj ET
+BT /F2 10 Tf 330 516 Td (Total de unidades: 1560) Tj ET
+BT /F1 10 Tf 50 120 Td (Recibí conforme: ______________________) Tj ET
+BT /F1 10 Tf 330 120 Td (Firma y aclaración: ______________________) Tj ET
+BT /F1 8 Tf 50 80 Td (Este remito es un ejemplo para probar la carga de archivos de StockSuper.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000002405 00000 n 
+0000002502 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+2604
+%%EOF

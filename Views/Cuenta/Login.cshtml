@@ -1,0 +1,40 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Ingreso";
+    // Pantalla de acceso con diseño propio (sin barra lateral)
+    Layout = "_LayoutAuth";
+}
+
+<h1>Ingreso al sistema</h1>
+<p class="ss-subtitulo mb-4">Ingrese con la cuenta que le entregó el administrador de la plataforma.</p>
+
+<form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="username" autofocus />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div class="form-check mb-4">
+        <input asp-for="Recordarme" class="form-check-input" />
+        <label asp-for="Recordarme" class="form-check-label"></label>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 py-2">Ingresar</button>
+</form>
+
+<div class="ss-acceso-nota">
+    Si olvidó sus datos de acceso o necesita una cuenta nueva, comuníquese con el administrador de la plataforma.
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

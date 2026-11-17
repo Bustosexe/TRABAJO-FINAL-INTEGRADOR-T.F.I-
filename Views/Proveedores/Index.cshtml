@@ -1,0 +1,91 @@
+﻿@model IEnumerable<Proveedor>
+@{
+    ViewData["Title"] = "Proveedores";
+    var usuarios = (Dictionary<string, string>)ViewData["Usuarios"]!;
+    var buscar = ViewData["Buscar"] as string;
+    var estado = ViewData["Estado"] as string;
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Proveedores</h1>
+        <div class="ss-subtitulo">Empresas que abastecen mercadería. No se eliminan: se dan de baja.</div>
+    </div>
+    <a asp-action="Crear" class="btn btn-primary">Nuevo proveedor</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-md-5 col-lg-4">
+        <input name="buscar" value="@buscar" class="form-control" placeholder="Buscar por razón social o CUIT" />
+    </div>
+    <div class="col-sm-4 col-md-3 col-lg-2">
+        <select name="estado" class="form-select">
+            <option value="" selected="@(string.IsNullOrEmpty(estado))">Todos</option>
+            <option value="activos" selected="@(estado == "activos")">Activos</option>
+            <option value="inactivos" selected="@(estado == "inactivos")">Dados de baja</option>
+        </select>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        @if (!string.IsNullOrWhiteSpace(buscar) || !string.IsNullOrEmpty(estado))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Razón social</th>
+                    <th>CUIT</th>
+                    <th>Contacto</th>
+                    <th>Estado</th>
+                    <th class="text-end">Productos</th>
+                    <th>Última acción</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var proveedor in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@proveedor.RazonSocial</td>
+                    <td>@proveedor.Cuit</td>
+                    <td>
+                        @proveedor.Telefono
+                        @if (!string.IsNullOrEmpty(proveedor.Email))
+                        {
+                            <div class="small ss-subtitulo">@proveedor.Email</div>
+                        }
+                    </td>
+                    <td>
+                        <span class="ss-estado @(proveedor.Activo ? "ss-estado-activo" : "ss-estado-inactivo")">
+                            @(proveedor.Activo ? "Activo" : "Dado de baja")
+                        </span>
+                    </td>
+                    <td class="text-end">@proveedor.Productos.Count</td>
+                    <td class="ss-auditoria">@ServicioAuditoria.UltimaAccion(proveedor, usuarios)</td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <a asp-action="Editar" asp-route-id="@proveedor.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <form asp-action="CambiarEstado" asp-route-id="@proveedor.Id" method="post"
+                                  data-titulo="@(proveedor.Activo ? "Dar de baja proveedor" : "Reactivar proveedor")"
+                                  data-confirmar="@(proveedor.Activo ? $"El proveedor '{proveedor.RazonSocial}' dejará de ofrecerse para nuevos pedidos. Su historial se conserva." : $"El proveedor '{proveedor.RazonSocial}' volverá a estar disponible.")"
+                                  data-si="@(proveedor.Activo ? "Dar de baja" : "Reactivar")">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">@(proveedor.Activo ? "Dar de baja" : "Reactivar")</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="7" class="text-center ss-subtitulo py-4">No hay proveedores para mostrar.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

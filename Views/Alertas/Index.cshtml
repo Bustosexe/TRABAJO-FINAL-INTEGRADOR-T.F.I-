@@ -1,0 +1,426 @@
+﻿@model AlertasViewModel
+@{
+    ViewData["Title"] = "Alertas de stock";
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+    var opciones = new[] { 7, 15, 30, 60 };
+
+    // Proveedores con productos bajo el mínimo, para redactar el pedido de reposición con IA
+    var proveedoresAReponer = Model.ProductosCriticos
+        .GroupBy(p => new { p.ProveedorId, p.Proveedor })
+        .Select(g => new { g.Key.ProveedorId, g.Key.Proveedor, Productos = g.Count(), Faltante = g.Sum(p => p.Faltante) })
+        .OrderByDescending(g => g.Faltante)
+        .ToList();
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Alertas de stock</h1>
+        <div class="ss-subtitulo">
+            Productos a reponer y mercadería que requiere una decisión.
+            @(esDirector ? "Se consideran todas las sucursales de la empresa." : "Se considera el stock de su sucursal.")
+        </div>
+    </div>
+    <div class="d-flex align-items-center flex-wrap gap-3">
+    <button type="button" class="btn btn-primary" id="botonInforme">Generar informe con IA</button>
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label class="small ss-subtitulo mb-0">Por vencer en</label>
+        <select name="dias" class="form-select form-select-sm" onchange="this.form.submit()">
+            @foreach (var d in opciones)
+            {
+                <option value="@d" selected="@(d == Model.Dias)">@d días</option>
+            }
+        </select>
+    </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="ss-indicador @(Model.ProductosCriticos.Any() ? "ss-indicador-alerta" : "")">
+            <div class="ss-indicador-valor">@Model.ProductosCriticos.Count</div>
+            <div class="ss-indicador-titulo">Productos bajo el stock mínimo</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ss-indicador @(Model.PalletsPorVencer.Any() ? "ss-indicador-alerta" : "")">
+            <div class="ss-indicador-valor">@Model.PalletsPorVencer.Count</div>
+            <div class="ss-indicador-titulo">Pallets que vencen en @Model.Dias días</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ss-indicador @(Model.PalletsVencidos.Any() ? "ss-indicador-critico" : "")">
+            <div class="ss-indicador-valor">@Model.PalletsVencidos.Count</div>
+            <div class="ss-indicador-titulo">Pallets vencidos con existencia</div>
+        </div>
+    </div>
+</div>
+
+<div class="ss-panel mb-4">
+    <div class="ss-panel-titulo">Mercadería vencida con existencia</div>
+    <div class="table-responsive">
+        <table class="table ss-tabla mb-0">
+            <thead>
+                <tr>
+                    <th>Sucursal</th>
+                    <th>Pallet</th>
+                    <th>Producto</th>
+                    <th>Ubicación</th>
+                    <th class="text-end">Unidades</th>
+                    <th>Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.PalletsVencidos)
+                {
+                    <tr>
+                        <td>@p.Sucursal</td>
+                        <td><a asp-controller="Pallets" asp-action="Detalle" asp-route-id="@p.Id" class="fw-semibold text-decoration-none">@p.CodigoPallet</a></td>
+                        <td>@p.Producto<div class="small ss-subtitulo">@p.Sku</div></td>
+                        <td>@p.Sector</td>
+                        <td class="text-end">@p.CantidadActual.ToString("N0")</td>
+                        <td>
+                            @p.FechaVencimiento.ToString("dd/MM/yyyy")
+                            <span class="ss-estado ss-estado-critico ms-1">Hace @((Model.Hoy - p.FechaVencimiento).Days) días</span>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.PalletsVencidos.Any())
+                {
+                    <tr><td colspan="6" class="text-center ss-subtitulo py-4">No hay mercadería vencida con existencia.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="ss-panel mb-4">
+    <div class="ss-panel-titulo">Mercadería por vencer en los próximos @Model.Dias días</div>
+    <div class="table-responsive">
+        <table class="table ss-tabla mb-0">
+            <thead>
+                <tr>
+                    <th>Sucursal</th>
+                    <th>Pallet</th>
+                    <th>Producto</th>
+                    <th>Ubicación</th>
+                    <th class="text-end">Unidades</th>
+                    <th>Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.PalletsPorVencer)
+                {
+                    <tr>
+                        <td>@p.Sucursal</td>
+                        <td><a asp-controller="Pallets" asp-action="Detalle" asp-route-id="@p.Id" class="fw-semibold text-decoration-none">@p.CodigoPallet</a></td>
+                        <td>@p.Producto<div class="small ss-subtitulo">@p.Sku</div></td>
+                        <td>@p.Sector</td>
+                        <td class="text-end">@p.CantidadActual.ToString("N0")</td>
+                        <td>
+                            @p.FechaVencimiento.ToString("dd/MM/yyyy")
+                            <span class="ss-estado ss-estado-alerta ms-1">En @((p.FechaVencimiento - Model.Hoy).Days) días</span>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.PalletsPorVencer.Any())
+                {
+                    <tr><td colspan="6" class="text-center ss-subtitulo py-4">No hay mercadería por vencer en este plazo.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (esDirector && proveedoresAReponer.Any())
+{
+    <div class="ss-panel mb-4">
+        <div class="ss-panel-titulo">Pedidos de reposición por proveedor</div>
+        <div class="table-responsive">
+            <table class="table ss-tabla mb-0">
+                <thead>
+                    <tr>
+                        <th>Proveedor</th>
+                        <th class="text-end">Productos bajo el mínimo</th>
+                        <th class="text-end">Unidades faltantes</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var g in proveedoresAReponer)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@g.Proveedor</td>
+                            <td class="text-end">@g.Productos</td>
+                            <td class="text-end">@g.Faltante.ToString("N0")</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-pedido-proveedor="@g.ProveedorId">Redactar pedido con IA</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="ss-panel">
+    <div class="ss-panel-titulo">Productos a reponer</div>
+    <div class="table-responsive">
+        <table class="table ss-tabla mb-0">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Proveedor</th>
+                    <th class="text-end">Stock actual</th>
+                    <th class="text-end">Mínimo</th>
+                    <th class="text-end">Faltante</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.ProductosCriticos)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Productos" asp-action="Detalle" asp-route-id="@p.Id" class="fw-semibold text-decoration-none">@p.Nombre</a>
+                            <div class="small ss-subtitulo">@p.Sku</div>
+                        </td>
+                        <td>@p.Categoria</td>
+                        <td>@p.Proveedor</td>
+                        <td class="text-end">
+                            @p.StockActual.ToString("N0")
+                            @if (p.StockActual == 0)
+                            {
+                                <span class="ss-estado ss-estado-critico ms-1">Sin stock</span>
+                            }
+                        </td>
+                        <td class="text-end">@p.StockMinimo.ToString("N0")</td>
+                        <td class="text-end fw-semibold">@p.Faltante.ToString("N0")</td>
+                    </tr>
+                }
+                @if (!Model.ProductosCriticos.Any())
+                {
+                    <tr><td colspan="6" class="text-center ss-subtitulo py-4">Todos los productos activos están sobre su stock mínimo.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* Token antifalsificación para las llamadas AJAX del módulo de IA *@
+<form id="formIa" class="d-none">@Html.AntiForgeryToken()</form>
+
+@* Modal del informe ejecutivo generado con IA *@
+<div class="modal fade" id="modalInforme" tabindex="-1" aria-labelledby="tituloModalInforme" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="tituloModalInforme">Informe ejecutivo de alertas</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="estadoInforme" class="ss-subtitulo">Generando el informe...</div>
+                <div id="textoInforme" class="ss-texto-ia d-none"></div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div class="small ss-subtitulo">Texto generado con IA a partir de las alertas actuales. Verifíquelo antes de usarlo.</div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary d-none" id="botonCopiarInforme">Copiar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (esDirector)
+{
+    @* Modal del pedido de reposición: la IA redacta, la Dirección revisa, edita y envía *@
+    <div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="tituloModalPedido" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="tituloModalPedido">Pedido de reposición</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="estadoPedido" class="ss-subtitulo">Redactando el pedido...</div>
+                    <div id="formularioPedido" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">Destinatario</label>
+                            <input type="text" id="pedidoDestino" class="form-control" readonly />
+                            <div class="form-text">Se toma del correo registrado del proveedor.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pedidoAsunto" class="form-label">Asunto</label>
+                            <input type="text" id="pedidoAsunto" class="form-control" maxlength="150" />
+                        </div>
+                        <div>
+                            <label for="pedidoCuerpo" class="form-label">Mensaje</label>
+                            <textarea id="pedidoCuerpo" class="form-control" rows="12" maxlength="5000"></textarea>
+                            <div class="form-text">Borrador generado con IA. Revíselo y corríjalo antes de enviarlo.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-primary d-none" id="botonCopiarPedido">Copiar</button>
+                    <button type="button" class="btn btn-primary d-none" id="botonEnviarPedido">Enviar al proveedor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Módulo de IA de la pantalla de alertas. Las llamadas son AJAX (fetch) con el token
+        // antifalsificación; el servidor arma los datos y consulta a la IA, por lo que la
+        // API Key nunca llega al navegador.
+        const tokenIa = document.querySelector('#formIa input[name="__RequestVerificationToken"]').value;
+        const errorGenerico = 'No se pudo completar la operación. Recargue la página e intente nuevamente.';
+
+        async function llamarServidor(url, datos) {
+            const respuesta = await fetch(url, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': tokenIa },
+                body: new URLSearchParams(datos)
+            });
+            if (!respuesta.ok) throw new Error('Respuesta ' + respuesta.status);
+            return await respuesta.json();
+        }
+
+        function avisar(texto, exito) {
+            Swal.fire({
+                toast: true, position: 'top-end', title: texto, showConfirmButton: false,
+                timer: 4000, customClass: { popup: exito ? 'ss-toast-exito' : 'ss-toast-error' }
+            });
+        }
+
+        function copiar(texto) {
+            navigator.clipboard.writeText(texto).then(function () { avisar('Texto copiado.', true); });
+        }
+
+        // ---- Informe ejecutivo ----
+        const modalInforme = new bootstrap.Modal(document.getElementById('modalInforme'));
+        const estadoInforme = document.getElementById('estadoInforme');
+        const textoInforme = document.getElementById('textoInforme');
+        const botonInforme = document.getElementById('botonInforme');
+        const botonCopiarInforme = document.getElementById('botonCopiarInforme');
+
+        botonInforme.addEventListener('click', async function () {
+            estadoInforme.textContent = 'Generando el informe...';
+            estadoInforme.classList.remove('d-none');
+            textoInforme.classList.add('d-none');
+            botonCopiarInforme.classList.add('d-none');
+            botonInforme.disabled = true;
+            modalInforme.show();
+
+            try {
+                const resultado = await llamarServidor('@Url.Action("InformeIa", "Alertas")', { dias: '@Model.Dias' });
+                if (resultado.ok) {
+                    // textContent: el texto de la IA se muestra como texto, nunca como HTML
+                    textoInforme.textContent = resultado.texto;
+                    textoInforme.classList.remove('d-none');
+                    estadoInforme.classList.add('d-none');
+                    botonCopiarInforme.classList.remove('d-none');
+                } else {
+                    estadoInforme.textContent = resultado.error || errorGenerico;
+                }
+            } catch (e) {
+                estadoInforme.textContent = errorGenerico;
+            } finally {
+                botonInforme.disabled = false;
+            }
+        });
+
+        botonCopiarInforme.addEventListener('click', function () { copiar(textoInforme.textContent); });
+
+        // ---- Pedido de reposición (solo Dirección) ----
+        const elementoModalPedido = document.getElementById('modalPedido');
+        if (elementoModalPedido) {
+            const modalPedido = new bootstrap.Modal(elementoModalPedido);
+            const estadoPedido = document.getElementById('estadoPedido');
+            const formularioPedido = document.getElementById('formularioPedido');
+            const pedidoDestino = document.getElementById('pedidoDestino');
+            const pedidoAsunto = document.getElementById('pedidoAsunto');
+            const pedidoCuerpo = document.getElementById('pedidoCuerpo');
+            const botonEnviarPedido = document.getElementById('botonEnviarPedido');
+            const botonCopiarPedido = document.getElementById('botonCopiarPedido');
+            let proveedorActual = null;
+
+            document.querySelectorAll('[data-pedido-proveedor]').forEach(function (boton) {
+                boton.addEventListener('click', async function () {
+                    proveedorActual = boton.dataset.pedidoProveedor;
+                    estadoPedido.textContent = 'Redactando el pedido...';
+                    estadoPedido.classList.remove('d-none');
+                    formularioPedido.classList.add('d-none');
+                    botonEnviarPedido.classList.add('d-none');
+                    botonCopiarPedido.classList.add('d-none');
+                    boton.disabled = true;
+                    modalPedido.show();
+
+                    try {
+                        const resultado = await llamarServidor('@Url.Action("PedidoIa", "Alertas")', { proveedorId: proveedorActual });
+                        if (resultado.ok) {
+                            document.getElementById('tituloModalPedido').textContent = 'Pedido de reposición - ' + resultado.proveedor;
+                            pedidoDestino.value = resultado.destino || 'El proveedor no tiene correo registrado';
+                            pedidoAsunto.value = resultado.asunto;
+                            pedidoCuerpo.value = resultado.cuerpo;
+                            formularioPedido.classList.remove('d-none');
+                            estadoPedido.classList.add('d-none');
+                            botonCopiarPedido.classList.remove('d-none');
+                            botonEnviarPedido.classList.toggle('d-none', !resultado.puedeEnviar);
+                        } else {
+                            estadoPedido.textContent = resultado.error || errorGenerico;
+                        }
+                    } catch (e) {
+                        estadoPedido.textContent = errorGenerico;
+                    } finally {
+                        boton.disabled = false;
+                    }
+                });
+            });
+
+            botonCopiarPedido.addEventListener('click', function () {
+                copiar(pedidoAsunto.value + '\n\n' + pedidoCuerpo.value);
+            });
+
+            botonEnviarPedido.addEventListener('click', async function () {
+                const confirmacion = await Swal.fire({
+                    title: 'Enviar pedido',
+                    text: 'El correo se enviará a ' + pedidoDestino.value + '.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#1F3A5F',
+                    cancelButtonColor: '#5B6F86',
+                    reverseButtons: true
+                });
+                if (!confirmacion.isConfirmed) return;
+
+                botonEnviarPedido.disabled = true;
+                botonEnviarPedido.textContent = 'Enviando...';
+                try {
+                    const resultado = await llamarServidor('@Url.Action("EnviarPedido", "Alertas")', {
+                        proveedorId: proveedorActual,
+                        asunto: pedidoAsunto.value,
+                        cuerpo: pedidoCuerpo.value
+                    });
+                    if (resultado.ok) {
+                        modalPedido.hide();
+                        avisar(resultado.mensaje, true);
+                    } else {
+                        avisar(resultado.error || errorGenerico, false);
+                    }
+                } catch (e) {
+                    avisar(errorGenerico, false);
+                } finally {
+                    botonEnviarPedido.disabled = false;
+                    botonEnviarPedido.textContent = 'Enviar al proveedor';
+                }
+            });
+        }
+    </script>
+}

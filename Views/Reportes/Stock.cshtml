@@ -1,0 +1,202 @@
+﻿@model ReporteStockViewModel
+@{
+    var sucursalTexto = Model.SucursalId?.ToString() ?? string.Empty;
+    var categoriaTexto = Model.CategoriaId?.ToString() ?? string.Empty;
+    ViewData["Title"] = "Reporte de stock";
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+
+    // Valores preparados aquí para no anidar comillas dentro de los atributos HTML
+    var desdeTexto = Model.Desde.ToString("yyyy-MM-dd");
+    var hastaTexto = Model.Hasta.ToString("yyyy-MM-dd");
+    var hoyTexto = Model.Hoy.ToString("yyyy-MM-dd");
+    var inicioMes = new DateTime(Model.Hoy.Year, Model.Hoy.Month, 1);
+    var inicioMesTexto = inicioMes.ToString("yyyy-MM-dd");
+    var inicioMesAnteriorTexto = inicioMes.AddMonths(-1).ToString("yyyy-MM-dd");
+    var finMesAnteriorTexto = inicioMes.AddDays(-1).ToString("yyyy-MM-dd");
+}
+
+<div class="mb-3">
+    <h1 class="ss-titulo mb-1">Reporte de stock</h1>
+    <div class="ss-subtitulo">
+        Período del @Model.Desde.ToString("dd/MM/yyyy") al @Model.Hasta.ToString("dd/MM/yyyy").
+        @(esDirector ? "Incluye todas las sucursales, salvo que filtre por una." : "Corresponde a su sucursal.")
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="Stock" asp-route-desde="@hoyTexto" asp-route-hasta="@hoyTexto"
+       asp-route-sucursalId="@Model.SucursalId" asp-route-categoriaId="@Model.CategoriaId"
+       class="btn btn-sm btn-outline-secondary">Hoy</a>
+    <a asp-action="Stock" asp-route-desde="@inicioMesTexto" asp-route-hasta="@hoyTexto"
+       asp-route-sucursalId="@Model.SucursalId" asp-route-categoriaId="@Model.CategoriaId"
+       class="btn btn-sm btn-outline-secondary">Este mes</a>
+    <a asp-action="Stock" asp-route-desde="@inicioMesAnteriorTexto" asp-route-hasta="@finMesAnteriorTexto"
+       asp-route-sucursalId="@Model.SucursalId" asp-route-categoriaId="@Model.CategoriaId"
+       class="btn btn-sm btn-outline-secondary">Mes anterior</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-lg-2">
+        <label class="form-label small mb-0">Desde</label>
+        <input type="date" name="desde" value="@desdeTexto" class="form-control" />
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <label class="form-label small mb-0">Hasta</label>
+        <input type="date" name="hasta" value="@hastaTexto" class="form-control" />
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <label class="form-label small mb-0">Producto</label>
+        <input name="buscar" value="@Model.Buscar" class="form-control" placeholder="SKU o nombre" />
+    </div>
+    <div class="col-sm-6 col-lg-2">
+        <label class="form-label small mb-0">Categoría</label>
+        <select name="categoriaId" class="form-select" asp-items="Model.Categorias">
+            <option value="">Todas</option>
+        </select>
+    </div>
+    @if (esDirector)
+    {
+        <div class="col-sm-6 col-lg-2">
+            <label class="form-label small mb-0">Sucursal</label>
+            <select name="sucursalId" class="form-select" asp-items="Model.Sucursales">
+                <option value="">Todas</option>
+            </select>
+        </div>
+    }
+    <div class="col-auto d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-outline-primary">Generar</button>
+        <a asp-action="Stock" class="btn btn-outline-secondary">Restablecer</a>
+    </div>
+</form>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-xl-3">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@Model.TotalInicial.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Stock al inicio del período</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@Model.TotalEntradas.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Unidades que entraron</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@Model.TotalSalidas.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Unidades que salieron</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@Model.TotalFinal.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Stock al cierre del período</div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="StockPdf" asp-route-desde="@desdeTexto" asp-route-hasta="@hastaTexto"
+       asp-route-sucursalId="@Model.SucursalId" asp-route-categoriaId="@Model.CategoriaId"
+       asp-route-buscar="@Model.Buscar" class="btn btn-outline-primary">Descargar PDF</a>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCorreo">
+        Enviar por correo
+    </button>
+</div>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th class="text-end">Stock inicial</th>
+                    <th class="text-end">Entradas</th>
+                    <th class="text-end">Salidas</th>
+                    <th class="text-end">Stock final</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model.Filas)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Productos" asp-action="Detalle" asp-route-id="@f.ProductoId" class="fw-semibold text-decoration-none">@f.Producto</a>
+                            <div class="small ss-subtitulo">@f.Sku</div>
+                        </td>
+                        <td>@f.Categoria</td>
+                        <td class="text-end">@f.StockInicial.ToString("N0")</td>
+                        <td class="text-end">@f.Entradas.ToString("N0")</td>
+                        <td class="text-end">@f.Salidas.ToString("N0")</td>
+                        <td class="text-end fw-semibold">@f.StockFinal.ToString("N0")</td>
+                    </tr>
+                }
+                @if (!Model.Filas.Any())
+                {
+                    <tr><td colspan="6" class="text-center ss-subtitulo py-4">No hay movimientos ni existencias para el período y los filtros elegidos.</td></tr>
+                }
+            </tbody>
+            @if (Model.Filas.Any())
+            {
+                <tfoot>
+                    <tr class="fw-semibold">
+                        <td colspan="2">Total</td>
+                        <td class="text-end">@Model.TotalInicial.ToString("N0")</td>
+                        <td class="text-end">@Model.TotalEntradas.ToString("N0")</td>
+                        <td class="text-end">@Model.TotalSalidas.ToString("N0")</td>
+                        <td class="text-end">@Model.TotalFinal.ToString("N0")</td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+</div>
+
+<div class="small ss-subtitulo mt-2">
+    Stock final = stock inicial + entradas - salidas. Si el período termina hoy, el stock final coincide con el stock actual de los pallets.
+</div>
+
+<div class="modal fade" id="modalCorreo" tabindex="-1" aria-labelledby="tituloModalCorreo" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EnviarStock" method="post" id="formCorreo">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="tituloModalCorreo">Enviar reporte por correo</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="ss-subtitulo">
+                        Se enviará el PDF del período del @Model.Desde.ToString("dd/MM/yyyy") al @Model.Hasta.ToString("dd/MM/yyyy"),
+                        con los filtros aplicados actualmente.
+                    </p>
+                    <input type="hidden" name="desde" value="@desdeTexto" />
+                    <input type="hidden" name="hasta" value="@hastaTexto" />
+                    <input type="hidden" name="sucursalId" value="@sucursalTexto" />
+                    <input type="hidden" name="categoriaId" value="@categoriaTexto" />
+                    <input type="hidden" name="buscar" value="@Model.Buscar" />
+
+                    <label for="destino" class="form-label">Correo de destino</label>
+                    <input type="email" id="destino" name="destino" class="form-control"
+                           maxlength="100" required placeholder="nombre@empresa.com" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="botonEnviarCorreo">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Evita envíos dobles mientras el servidor arma el PDF y lo manda
+        document.getElementById('formCorreo').addEventListener('submit', function () {
+            const boton = document.getElementById('botonEnviarCorreo');
+            boton.disabled = true;
+            boton.textContent = 'Enviando...';
+        });
+    </script>
+}

@@ -1,0 +1,113 @@
+﻿@using System.Text.Json
+@model PalletFormViewModel
+@{
+    ViewData["Title"] = "Ingresar pallet";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">Ingresar pallet</h1>
+            <div class="ss-subtitulo">La cantidad inicial queda registrada como la primera entrada de stock.</div>
+        </div>
+
+        @if (!Model.Sectores.Any())
+        {
+            <div class="alert alert-warning">
+                Su sucursal todavía no tiene sectores de depósito.
+                <a asp-controller="Sectores" asp-action="Crear">Cree el primero</a> para poder ubicar el pallet.
+            </div>
+        }
+
+        <div class="ss-panel">
+            <div class="p-4">
+                <form asp-action="Crear" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="CodigoPallet" class="form-label"></label>
+                            <input asp-for="CodigoPallet" class="form-control" autofocus />
+                            <span asp-validation-for="CodigoPallet" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="ProductoId" class="form-label"></label>
+                            <select asp-for="ProductoId" asp-items="Model.Productos" class="form-select">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="ProductoId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="SectorDepositoId" class="form-label"></label>
+                            <select asp-for="SectorDepositoId" asp-items="Model.Sectores" class="form-select">
+                                <option value="">Seleccione...</option>
+                            </select>
+                            <span asp-validation-for="SectorDepositoId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CodigoLote" class="form-label"></label>
+                            <input asp-for="CodigoLote" class="form-control" />
+                            <span asp-validation-for="CodigoLote" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="CantidadInicial" class="form-label"></label>
+                            <input asp-for="CantidadInicial" class="form-control" inputmode="numeric" />
+                            <span asp-validation-for="CantidadInicial" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PrecioCompra" class="form-label"></label>
+                            <input asp-for="PrecioCompra" class="form-control" inputmode="decimal" />
+                            <span asp-validation-for="PrecioCompra" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="FechaElaboracion" class="form-label"></label>
+                            <input asp-for="FechaElaboracion" class="form-control" />
+                            <span asp-validation-for="FechaElaboracion" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="FechaVencimiento" class="form-label"></label>
+                            <input asp-for="FechaVencimiento" class="form-control" />
+                            <div id="avisoVencimiento" class="form-text d-none">
+                                Este producto es perecedero: la fecha de vencimiento es obligatoria.
+                            </div>
+                            <span asp-validation-for="FechaVencimiento" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="RemitoArchivo" class="form-label"></label>
+                            <input asp-for="RemitoArchivo" type="file" class="form-control"
+                                   accept=".pdf,application/pdf" data-adjunto-pdf />
+                            <div class="form-text">Opcional. Archivo PDF, máximo 5 MB.</div>
+                            <span asp-validation-for="RemitoArchivo" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Ingresar pallet</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/adjunto-pdf.js" asp-append-version="true"></script>
+    <script>
+        // Avisa si el producto elegido pertenece a una categoría que controla vencimiento
+        // (el servidor repite esta validación)
+        const exigeVencimiento = @Html.Raw(JsonSerializer.Serialize(Model.ProductosConVencimiento));
+        const selectorProducto = document.getElementById('ProductoId');
+        const aviso = document.getElementById('avisoVencimiento');
+
+        function actualizarAviso() {
+            aviso.classList.toggle('d-none', exigeVencimiento[selectorProducto.value] !== true);
+        }
+        selectorProducto.addEventListener('change', actualizarAviso);
+        actualizarAviso();
+    </script>
+}

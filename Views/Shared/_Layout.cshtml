@@ -1,0 +1,141 @@
+﻿@{
+    // Datos de la cuenta activa, tomados de los claims de la sesión
+    var estaLogueado = User.Identity?.IsAuthenticated == true;
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+    var esSucursal = User.IsInRole(Roles.UsuarioSucursal);
+    var esPlataforma = User.IsInRole(Roles.AdministradorPlataforma);
+
+    // Mientras la cuenta tenga contraseña temporal solo puede cambiarla: se oculta el menú
+    var soloCambioPassword = (ViewData["EsObligatorio"] as bool?) == true;
+
+    // Controlador de la pantalla actual: resalta la sección en la barra lateral
+    var controladorActual = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    string Activo(string controlador) => string.Equals(controladorActual, controlador, StringComparison.OrdinalIgnoreCase) ? "activo" : string.Empty;
+
+    // Fecha de hoy en horario argentino, con la primera letra en mayúscula
+    var fechaHoy = FormatoFecha.HoyArgentina.ToString("dddd d 'de' MMMM 'de' yyyy");
+    if (fechaHoy.Length > 0) { fechaHoy = char.ToUpper(fechaHoy[0]) + fechaHoy.Substring(1); }
+
+    var operaStock = estaLogueado && (esDirector || esSucursal);
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - StockSuper</title>
+    <link rel="icon" type="image/svg+xml" href="~/img/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;650;700&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="ss-app">
+        @* Barra lateral de navegación, agrupada por tipo de tarea *@
+        <aside class="ss-lateral" id="ssLateral" aria-label="Navegación principal">
+            <a class="ss-lateral-marca" asp-area="" asp-controller="Home" asp-action="Index">
+                <partial name="_LogoMarca" />
+                <span class="ss-marca-texto">
+                    <span class="ss-marca-nombre">Stock<span class="ss-marca-ligero">Super</span></span>
+                    <span class="ss-marca-detalle">Stock y proveedores</span>
+                </span>
+            </a>
+
+            <nav class="ss-lateral-menu">
+                @if (estaLogueado && !soloCambioPassword)
+                {
+                    <a class="ss-menu-enlace @Activo("Home")" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
+
+                    @if (esDirector)
+                    {
+                        <div class="ss-menu-grupo">Inventario</div>
+                        <a class="ss-menu-enlace @Activo("Productos")" asp-controller="Productos" asp-action="Index">Productos</a>
+                        <a class="ss-menu-enlace @Activo("Pallets")" asp-controller="Pallets" asp-action="Index">Pallets</a>
+                        <a class="ss-menu-enlace @Activo("Movimientos")" asp-controller="Movimientos" asp-action="Index">Movimientos</a>
+
+                        <div class="ss-menu-grupo">Catálogo</div>
+                        <a class="ss-menu-enlace @Activo("Categorias")" asp-controller="Categorias" asp-action="Index">Categorías</a>
+                        <a class="ss-menu-enlace @Activo("Marcas")" asp-controller="Marcas" asp-action="Index">Marcas</a>
+                        <a class="ss-menu-enlace @Activo("Proveedores")" asp-controller="Proveedores" asp-action="Index">Proveedores</a>
+
+                        <div class="ss-menu-grupo">Control</div>
+                        <a class="ss-menu-enlace @Activo("Alertas")" asp-controller="Alertas" asp-action="Index">Alertas</a>
+                        <a class="ss-menu-enlace @Activo("Reportes")" asp-controller="Reportes" asp-action="Stock">Reportes</a>
+                        <a class="ss-menu-enlace @Activo("Auditoria")" asp-controller="Auditoria" asp-action="Index">Auditoría</a>
+                    }
+                    else if (esSucursal)
+                    {
+                        <div class="ss-menu-grupo">Inventario</div>
+                        <a class="ss-menu-enlace @Activo("Productos")" asp-controller="Productos" asp-action="Index">Productos</a>
+                        <a class="ss-menu-enlace @Activo("Pallets")" asp-controller="Pallets" asp-action="Index">Pallets</a>
+                        <a class="ss-menu-enlace @Activo("Movimientos")" asp-controller="Movimientos" asp-action="Index">Movimientos</a>
+                        <a class="ss-menu-enlace @Activo("Sectores")" asp-controller="Sectores" asp-action="Index">Sectores</a>
+
+                        <div class="ss-menu-grupo">Control</div>
+                        <a class="ss-menu-enlace @Activo("Alertas")" asp-controller="Alertas" asp-action="Index">Alertas</a>
+                        <a class="ss-menu-enlace @Activo("Reportes")" asp-controller="Reportes" asp-action="Stock">Reportes</a>
+                    }
+                    else if (esPlataforma)
+                    {
+                        <div class="ss-menu-grupo">Clientes</div>
+                        <a class="ss-menu-enlace @Activo("Empresas")" asp-area="Plataforma" asp-controller="Empresas" asp-action="Index">Empresas</a>
+                        <a class="ss-menu-enlace @Activo("Sucursales")" asp-area="Plataforma" asp-controller="Sucursales" asp-action="Index">Sucursales</a>
+                        <a class="ss-menu-enlace @Activo("Cuentas")" asp-area="Plataforma" asp-controller="Cuentas" asp-action="Index">Cuentas de acceso</a>
+
+                        <div class="ss-menu-grupo">Control</div>
+                        <a class="ss-menu-enlace @Activo("Auditoria")" asp-area="Plataforma" asp-controller="Auditoria" asp-action="Index">Auditoría</a>
+                    }
+                }
+            </nav>
+
+            <div class="ss-lateral-pie">Sistema de gestión de inventario</div>
+        </aside>
+        <div class="ss-velo" id="ssVelo"></div>
+
+        <div class="ss-cuerpo">
+            @* Barra superior: fecha de trabajo y menú de la cuenta *@
+            <header class="ss-barra">
+                <div class="ss-barra-izquierda">
+                    <button type="button" class="btn btn-outline-secondary ss-barra-menu" id="ssMenuBoton"
+                            aria-controls="ssLateral" aria-expanded="false">Menú</button>
+                    <span class="ss-barra-fecha">@fechaHoy</span>
+                </div>
+                <partial name="_LoginPartial" />
+            </header>
+
+            <main role="main" class="ss-contenido">
+                @RenderBody()
+            </main>
+
+            <footer class="ss-pie">
+                StockSuper - Control de stock y proveedores
+            </footer>
+        </div>
+    </div>
+
+    @* Chat asistente con IA: solo para las cuentas que operan stock *@
+    @if (operaStock)
+    {
+        <partial name="_AsistenteChat" />
+    }
+
+    @* Mensajes de resultado (TempData) leídos por site.js *@
+    <div id="ss-mensajes" hidden
+         data-exito="@TempData["Exito"]"
+         data-error="@TempData["Error"]"></div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (operaStock)
+    {
+        <script src="~/js/asistente.js" asp-append-version="true"></script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

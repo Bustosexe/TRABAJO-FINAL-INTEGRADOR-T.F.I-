@@ -1,0 +1,99 @@
+﻿@model CredencialesViewModel
+@{
+    ViewData["Title"] = "Credenciales de acceso";
+    var titulo = Model.EsRestablecimiento ? "Contraseña restablecida" : "Cuenta creada";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">@titulo</h1>
+            <div class="ss-subtitulo">
+                Entregue ahora la contraseña temporal por correo o WhatsApp. Al volver al listado de
+                cuentas deja de mostrarse y, si no la entregó, deberá restablecerla.
+            </div>
+        </div>
+
+        <div class="ss-panel mb-3">
+            <div class="ss-panel-titulo">@Model.NombreCuenta</div>
+            <div class="p-4">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Dirección de ingreso</dt>
+                    <dd class="col-sm-8">@Model.UrlIngreso</dd>
+                    <dt class="col-sm-4">Usuario</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+                    <dt class="col-sm-4">Contraseña temporal</dt>
+                    <dd class="col-sm-8 mb-0">
+                        <div class="input-group" style="max-width: 22rem">
+                            <input type="text" id="passwordTemporal" class="form-control font-monospace"
+                                   value="@Model.PasswordTemporal" readonly />
+                            <button type="button" class="btn btn-outline-primary" id="botonCopiar">Copiar</button>
+                        </div>
+                        <div class="form-text">En el primer ingreso el sistema obliga a cambiarla.</div>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="ss-panel mb-3">
+            <div class="ss-panel-titulo">Entregar las credenciales</div>
+            <div class="p-4">
+                <form asp-action="EnviarCredenciales" method="post" id="formCredenciales" class="row g-2 align-items-end mb-3">
+                    <input type="hidden" name="id" value="@Model.UsuarioId" />
+                    <input type="hidden" name="password" value="@Model.PasswordTemporal" />
+                    <div class="col-md-8">
+                        <label for="destino" class="form-label">Enviar por correo a</label>
+                        <input type="email" id="destino" name="destino" class="form-control"
+                               maxlength="100" required value="@Model.Email" />
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100" id="botonEnviar"
+                                disabled="@(!Model.CorreoConfigurado)">Enviar por correo</button>
+                    </div>
+                    @if (!Model.CorreoConfigurado)
+                    {
+                        <div class="col-12 form-text">El envío de correos todavía no está configurado en el servidor.</div>
+                    }
+                </form>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="@Model.EnlaceWhatsApp" target="_blank" rel="noopener noreferrer"
+                       class="btn btn-outline-primary">Enviar por WhatsApp</a>
+                    <button type="button" class="btn btn-outline-secondary" id="botonCopiarMensaje">Copiar mensaje completo</button>
+                </div>
+
+                <textarea id="mensajeCompleto" class="form-control mt-3" rows="7" readonly>@Model.Mensaje</textarea>
+            </div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver a cuentas</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Copia al portapapeles con aviso de SweetAlert2
+        function copiar(texto, aviso) {
+            navigator.clipboard.writeText(texto).then(function () {
+                Swal.fire({
+                    toast: true, position: 'top-end', title: aviso,
+                    showConfirmButton: false, timer: 2500, customClass: { popup: 'ss-toast-exito' }
+                });
+            });
+        }
+
+        document.getElementById('botonCopiar').addEventListener('click', function () {
+            copiar(document.getElementById('passwordTemporal').value, 'Contraseña copiada.');
+        });
+        document.getElementById('botonCopiarMensaje').addEventListener('click', function () {
+            copiar(document.getElementById('mensajeCompleto').value, 'Mensaje copiado.');
+        });
+
+        // Evita envíos dobles mientras el servidor manda el correo
+        document.getElementById('formCredenciales').addEventListener('submit', function () {
+            const boton = document.getElementById('botonEnviar');
+            boton.disabled = true;
+            boton.textContent = 'Enviando...';
+        });
+    </script>
+}

@@ -1,0 +1,67 @@
+﻿@model IEnumerable<Marca>
+@{
+    ViewData["Title"] = "Marcas";
+    var usuarios = (Dictionary<string, string>)ViewData["Usuarios"]!;
+    var buscar = ViewData["Buscar"] as string;
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Marcas</h1>
+        <div class="ss-subtitulo">Marcas comerciales de los productos del catálogo.</div>
+    </div>
+    <a asp-action="Crear" class="btn btn-primary">Nueva marca</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-8 col-md-5 col-lg-4">
+        <input name="buscar" value="@buscar" class="form-control" placeholder="Buscar por nombre" />
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        @if (!string.IsNullOrWhiteSpace(buscar))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th class="text-end">Productos</th>
+                    <th>Última acción</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var marca in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@marca.Nombre</td>
+                    <td class="text-end">@marca.Productos.Count</td>
+                    <td class="ss-auditoria">@ServicioAuditoria.UltimaAccion(marca, usuarios)</td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <a asp-action="Editar" asp-route-id="@marca.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <form asp-action="Eliminar" asp-route-id="@marca.Id" method="post"
+                                  data-titulo="Eliminar marca"
+                                  data-confirmar="Se eliminará la marca '@marca.Nombre'. Esta acción no se puede deshacer."
+                                  data-si="Eliminar">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Eliminar</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="4" class="text-center ss-subtitulo py-4">No hay marcas para mostrar.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,176 @@
+﻿@model DashboardViewModel
+@{
+    ViewData["Title"] = "Inicio";
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+}
+
+@if (Model.EsPlataforma)
+{
+    <div class="mb-4">
+        <h1 class="ss-titulo mb-1">Panel de la plataforma</h1>
+        <div class="ss-subtitulo">Gestión de clientes, sucursales y cuentas de acceso.</div>
+    </div>
+
+    <h2 class="ss-seccion">Resumen de clientes</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.TotalEmpresas</div>
+                <div class="ss-indicador-titulo">Empresas registradas</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.EmpresasActivas</div>
+                <div class="ss-indicador-titulo">Empresas con contrato activo</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.TotalSucursales</div>
+                <div class="ss-indicador-titulo">Sucursales en total</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.TotalCuentas</div>
+                <div class="ss-indicador-titulo">Cuentas de acceso</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ss-panel mb-4">
+        <div class="ss-panel-titulo">Accesos rápidos</div>
+        <div class="ss-accesos">
+            <a class="ss-acceso" asp-area="Plataforma" asp-controller="Empresas" asp-action="Index">
+                <span class="ss-acceso-titulo">Empresas</span>
+                <span class="ss-acceso-detalle">Alta de clientes y estado del contrato</span>
+            </a>
+            <a class="ss-acceso" asp-area="Plataforma" asp-controller="Sucursales" asp-action="Index">
+                <span class="ss-acceso-titulo">Sucursales</span>
+                <span class="ss-acceso-detalle">Apertura y cierre de sucursales</span>
+            </a>
+            <a class="ss-acceso" asp-area="Plataforma" asp-controller="Cuentas" asp-action="Index">
+                <span class="ss-acceso-titulo">Cuentas de acceso</span>
+                <span class="ss-acceso-detalle">Altas, claves temporales y bajas</span>
+            </a>
+            <a class="ss-acceso" asp-area="Plataforma" asp-controller="Auditoria" asp-action="Index">
+                <span class="ss-acceso-titulo">Auditoría</span>
+                <span class="ss-acceso-detalle">Registro de operaciones de la plataforma</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="ss-panel">
+        <div class="ss-panel-titulo">Alcance de esta cuenta</div>
+        <div class="p-3 ss-subtitulo">
+            Esta cuenta administra clientes, sucursales y cuentas de acceso. El inventario de
+            cada empresa es información propia del cliente y no está disponible desde aquí.
+        </div>
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <h1 class="ss-titulo mb-1">@Model.NombreEmpresa</h1>
+        <div class="ss-subtitulo">
+            @if (Model.NombreSucursal != null)
+            {
+                <text>Resumen de stock de @Model.NombreSucursal</text>
+            }
+            else
+            {
+                <text>Resumen de stock de todas las sucursales (@Model.SucursalesActivas activas)</text>
+            }
+        </div>
+    </div>
+
+    <h2 class="ss-seccion">Existencias</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-4">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.ProductosActivos</div>
+                <div class="ss-indicador-titulo">Productos activos en catálogo</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.UnidadesEnStock.ToString("N0")</div>
+                <div class="ss-indicador-titulo">Unidades en stock</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="ss-indicador">
+                <div class="ss-indicador-valor">@Model.PalletsConStock</div>
+                <div class="ss-indicador-titulo">Pallets con existencia</div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="ss-seccion">Situaciones a atender</h2>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-4">
+            <div class="ss-indicador @(Model.ProductosBajoMinimo > 0 ? "ss-indicador-alerta" : "")">
+                <div class="ss-indicador-valor">@Model.ProductosBajoMinimo</div>
+                <div class="ss-indicador-titulo">Productos bajo el stock mínimo</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="ss-indicador @(Model.PalletsPorVencer > 0 ? "ss-indicador-alerta" : "")">
+                <div class="ss-indicador-valor">@Model.PalletsPorVencer</div>
+                <div class="ss-indicador-titulo">Pallets que vencen en 30 días</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="ss-indicador @(Model.PalletsVencidos > 0 ? "ss-indicador-critico" : "")">
+                <div class="ss-indicador-valor">@Model.PalletsVencidos</div>
+                <div class="ss-indicador-titulo">Pallets vencidos con existencia</div>
+            </div>
+        </div>
+    </div>
+
+    @* Accesos directos según el rol: la dirección consulta y controla, la sucursal opera *@
+    <div class="ss-panel">
+        <div class="ss-panel-titulo">Accesos rápidos</div>
+        <div class="ss-accesos">
+            @if (esDirector)
+            {
+                <a class="ss-acceso" asp-controller="Alertas" asp-action="Index">
+                    <span class="ss-acceso-titulo">Alertas de stock</span>
+                    <span class="ss-acceso-detalle">Stock mínimo, vencimientos y pedidos a proveedores</span>
+                </a>
+                <a class="ss-acceso" asp-controller="Reportes" asp-action="Stock">
+                    <span class="ss-acceso-titulo">Reporte por período</span>
+                    <span class="ss-acceso-detalle">Stock inicial, entradas, salidas y final</span>
+                </a>
+                <a class="ss-acceso" asp-controller="Pallets" asp-action="Index">
+                    <span class="ss-acceso-titulo">Pallets</span>
+                    <span class="ss-acceso-detalle">Mercadería de todas las sucursales</span>
+                </a>
+                <a class="ss-acceso" asp-controller="Auditoria" asp-action="Index">
+                    <span class="ss-acceso-titulo">Auditoría</span>
+                    <span class="ss-acceso-detalle">Quién realizó cada operación</span>
+                </a>
+            }
+            else
+            {
+                <a class="ss-acceso" asp-controller="Pallets" asp-action="Crear">
+                    <span class="ss-acceso-titulo">Ingresar pallet</span>
+                    <span class="ss-acceso-detalle">Registrar mercadería recibida</span>
+                </a>
+                <a class="ss-acceso" asp-controller="Movimientos" asp-action="Registrar">
+                    <span class="ss-acceso-titulo">Registrar salida</span>
+                    <span class="ss-acceso-detalle">Ventas, mermas y otras bajas de stock</span>
+                </a>
+                <a class="ss-acceso" asp-controller="Alertas" asp-action="Index">
+                    <span class="ss-acceso-titulo">Alertas de stock</span>
+                    <span class="ss-acceso-detalle">Stock mínimo y vencimientos</span>
+                </a>
+                <a class="ss-acceso" asp-controller="Reportes" asp-action="Stock">
+                    <span class="ss-acceso-titulo">Reporte por período</span>
+                    <span class="ss-acceso-detalle">Stock inicial, entradas, salidas y final</span>
+                </a>
+            }
+        </div>
+    </div>
+}

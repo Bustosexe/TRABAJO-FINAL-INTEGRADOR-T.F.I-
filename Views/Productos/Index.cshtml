@@ -1,0 +1,124 @@
+﻿@model IEnumerable<ProductoListadoViewModel>
+@{
+        var categorias = ViewData["Categorias"] as SelectList;
+    ViewData["Title"] = "Productos";
+    var buscar = ViewData["Buscar"] as string;
+    var estado = ViewData["Estado"] as string;
+    var categoriaId = ViewData["CategoriaId"] as int?;
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Productos</h1>
+        <div class="ss-subtitulo">
+            Catálogo maestro. El stock mostrado corresponde
+            @(esDirector ? "a todas las sucursales de la empresa." : "a su sucursal.")
+        </div>
+    </div>
+    @if (esDirector)
+    {
+        <a asp-action="Crear" class="btn btn-primary">Nuevo producto</a>
+    }
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-lg-4">
+        <input name="buscar" value="@buscar" class="form-control" placeholder="Buscar por SKU o nombre" />
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <select name="categoriaId" class="form-select" asp-items="categorias">
+            <option value="">Todas las categorías</option>
+        </select>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <select name="estado" class="form-select">
+            <option value="" selected="@(string.IsNullOrEmpty(estado))">Todos los estados</option>
+            <option value="activos" selected="@(estado == "activos")">Activos</option>
+            <option value="inactivos" selected="@(estado == "inactivos")">Dados de baja</option>
+            <option value="bajominimo" selected="@(estado == "bajominimo")">Bajo el stock mínimo</option>
+        </select>
+    </div>
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        @if (!string.IsNullOrWhiteSpace(buscar) || categoriaId.HasValue || !string.IsNullOrEmpty(estado))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Producto</th>
+                    <th>Categoría / Marca</th>
+                    <th>Proveedor</th>
+                    <th class="text-end">Precio</th>
+                    <th class="text-end">Stock</th>
+                    <th>Situación</th>
+                    <th>Última acción</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    
+                    <td>@p.CodigoSku</td>
+                    <td class="fw-semibold">@p.Nombre</td>
+                    <td>@p.Categoria<div class="small ss-subtitulo">@p.Marca</div></td>
+                    <td>@p.Proveedor</td>
+                    <td class="text-end">@p.PrecioVenta.ToString("C2")</td>
+                    <td class="text-end">
+                        @p.StockActual.ToString("N0")
+                        <div class="small ss-subtitulo">mín. @p.StockMinimo.ToString("N0")</div>
+                    </td>
+                    <td>
+                        @if (!p.Activo)
+                        {
+                            <span class="ss-estado ss-estado-inactivo">Dado de baja</span>
+                        }
+                        else if (p.StockActual == 0)
+                        {
+                            <span class="ss-estado ss-estado-critico">Sin stock</span>
+                        }
+                        else if (p.StockActual < p.StockMinimo)
+                        {
+                            <span class="ss-estado ss-estado-alerta">Bajo mínimo</span>
+                        }
+                        else
+                        {
+                            <span class="ss-estado ss-estado-activo">Normal</span>
+                        }
+                    </td>
+                    <td class="ss-auditoria">@p.UltimaAccion</td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <a asp-action="Detalle" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Detalle</a>
+                            @if (esDirector)
+                            {
+                                <a asp-action="Editar" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <form asp-action="CambiarEstado" asp-route-id="@p.Id" method="post"
+                                      data-titulo="@(p.Activo ? "Dar de baja producto" : "Reactivar producto")"
+                                      data-confirmar="@(p.Activo ? $"El producto '{p.Nombre}' dejará de estar disponible para nuevos ingresos. Su historial de stock se conserva." : $"El producto '{p.Nombre}' volverá a estar disponible.")"
+                                      data-si="@(p.Activo ? "Dar de baja" : "Reactivar")">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">@(p.Activo ? "Dar de baja" : "Reactivar")</button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="9" class="text-center ss-subtitulo py-4">No hay productos para mostrar.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

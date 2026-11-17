@@ -1,0 +1,54 @@
+﻿@model Categoria
+@{
+    var esNuevo = Model.Id == 0;
+    ViewData["Title"] = esNuevo ? "Nueva categoría" : "Editar categoría";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="mb-4">
+            <h1 class="ss-titulo mb-1">@ViewData["Title"]</h1>
+            <div class="ss-subtitulo">Los campos con validación se controlan en el navegador y en el servidor.</div>
+        </div>
+
+        <div class="ss-panel">
+            <div class="p-4">
+                <form asp-action="@(esNuevo ? "Crear" : "Editar")" asp-route-id="@(esNuevo ? null : Model.Id)" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Nombre" class="form-label"></label>
+                        <input asp-for="Nombre" class="form-control" autofocus />
+                        <span asp-validation-for="Nombre" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Descripcion" class="form-label"></label>
+                        <textarea asp-for="Descripcion" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Descripcion" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="ControlaVencimiento" class="form-check-input" />
+                        <label asp-for="ControlaVencimiento" class="form-check-label"></label>
+                        <div class="form-text">Tilde esta opción en rubros perecederos (lácteos, fiambres, frescos).</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (!esNuevo && ViewData["Pie"] is PieAuditoriaViewModel pie)
+        {
+            <partial name="_PieAuditoria" model="pie" />
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

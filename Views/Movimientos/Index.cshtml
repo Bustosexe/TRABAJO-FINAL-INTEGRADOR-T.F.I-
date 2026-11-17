@@ -1,0 +1,152 @@
+﻿@using StockSuper.Models.Enums
+@model IEnumerable<MovimientoListadoViewModel>
+@{
+    ViewData["Title"] = "Movimientos de stock";
+    var esDirector = User.IsInRole(Roles.DirectorEmpresa);
+    var sucursales = ViewData["Sucursales"] as SelectList;
+
+    var buscar = ViewData["Buscar"] as string;
+    var desde = ViewData["Desde"] as DateTime?;
+    var hasta = ViewData["Hasta"] as DateTime?;
+    var tipo = ViewData["Tipo"] as TipoMovimiento?;
+    var motivo = ViewData["Motivo"] as MotivoMovimiento?;
+    var sucursalId = ViewData["SucursalId"] as int?;
+
+    // Los valores de fecha se preparan aquí para no anidar comillas dentro de los atributos
+    var desdeTexto = desde?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var hastaTexto = hasta?.ToString("yyyy-MM-dd") ?? string.Empty;
+
+    var totalEntradas = (int)ViewData["TotalEntradas"]!;
+    var totalSalidas = (int)ViewData["TotalSalidas"]!;
+    var cantidad = (int)ViewData["Cantidad"]!;
+    var maximo = (int)ViewData["Maximo"]!;
+    var hayFiltros = !string.IsNullOrWhiteSpace(buscar) || desde.HasValue || hasta.HasValue
+        || tipo.HasValue || motivo.HasValue || sucursalId.HasValue;
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="ss-titulo mb-1">Movimientos de stock</h1>
+        <div class="ss-subtitulo">
+            Registro de entradas y salidas. No se editan ni se eliminan: un error se corrige con otro movimiento.
+            @(esDirector ? "Se muestran todas las sucursales de la empresa." : "Se muestran los movimientos de su sucursal.")
+        </div>
+    </div>
+    @if (!esDirector)
+    {
+        <a asp-action="Registrar" class="btn btn-primary">Registrar movimiento</a>
+    }
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-sm-6 col-lg-3">
+        <input name="buscar" value="@buscar" class="form-control" placeholder="Buscar por pallet, SKU o producto" />
+    </div>
+    <div class="col-sm-3 col-lg-2">
+        <input type="date" name="desde" value="@desdeTexto" class="form-control" title="Desde" />
+    </div>
+    <div class="col-sm-3 col-lg-2">
+        <input type="date" name="hasta" value="@hastaTexto" class="form-control" title="Hasta" />
+    </div>
+    <div class="col-sm-4 col-lg-2">
+        <select name="tipo" class="form-select">
+            <option value="">Todos los tipos</option>
+            <option value="1" selected="@(tipo == TipoMovimiento.Entrada)">Entradas</option>
+            <option value="2" selected="@(tipo == TipoMovimiento.Salida)">Salidas</option>
+        </select>
+    </div>
+    <div class="col-sm-4 col-lg-3">
+        <select name="motivo" class="form-select">
+            <option value="">Todos los motivos</option>
+            @foreach (var m in Enum.GetValues<MotivoMovimiento>())
+            {
+                <option value="@((int)m)" selected="@(motivo == m)">@m.Etiqueta()</option>
+            }
+        </select>
+    </div>
+    @if (esDirector)
+    {
+        <div class="col-sm-4 col-lg-3">
+            <select name="sucursalId" class="form-select" asp-items="sucursales">
+                <option value="">Todas las sucursales</option>
+            </select>
+        </div>
+    }
+    <div class="col-auto d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        @if (hayFiltros)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-4">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@totalEntradas.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Unidades que entraron</div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@totalSalidas.ToString("N0")</div>
+            <div class="ss-indicador-titulo">Unidades que salieron</div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="ss-indicador">
+            <div class="ss-indicador-valor">@((totalEntradas - totalSalidas).ToString("N0"))</div>
+            <div class="ss-indicador-titulo">Variación neta del período (@cantidad.ToString("N0") movimientos)</div>
+        </div>
+    </div>
+</div>
+
+<div class="ss-panel">
+    <div class="table-responsive">
+        <table class="table ss-tabla table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    @if (esDirector) { <th>Sucursal</th> }
+                    <th>Pallet</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th class="text-end">Cantidad</th>
+                    <th>Observación</th>
+                    <th>Registrado por</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td class="text-nowrap">@m.FechaMovimiento.AHoraArgentina().ToString("dd/MM/yyyy HH:mm")</td>
+                    @if (esDirector) { <td>@m.Sucursal</td> }
+                    <td>
+                        <a asp-controller="Pallets" asp-action="Detalle" asp-route-id="@m.PalletId" class="fw-semibold text-decoration-none">@m.CodigoPallet</a>
+                    </td>
+                    <td>@m.Producto<div class="small ss-subtitulo">@m.Sku</div></td>
+                    <td>@m.Tipo.Etiqueta()</td>
+                    <td>@m.Motivo.Etiqueta()</td>
+                    <td class="text-end">@(m.Tipo == TipoMovimiento.Entrada ? "+" : "-")@m.Cantidad.ToString("N0")</td>
+                    <td>@m.Observacion</td>
+                    <td class="ss-auditoria">@m.Cuenta</td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="@(esDirector ? 9 : 8)" class="text-center ss-subtitulo py-4">No hay movimientos para mostrar.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (cantidad > maximo)
+{
+    <div class="small ss-subtitulo mt-2">
+        Se muestran los últimos @maximo de @cantidad.ToString("N0") movimientos. Los totales incluyen todos. Use los filtros para acotar el resultado.
+    </div>
+}
