@@ -3,8 +3,8 @@
 Sistema web de control de stock y proveedores para cadenas de supermercados.
 Trabajo Final Integrador de Programación Web.
 
-- **Sitio en producción:** stocksuper.runasp.net_
-- **Repositorio:** _TRABAJO-FINAL-INTEGRADOR-TFI-_
+- **Sitio en producción:** stocksuper.runasp.net
+- **Repositorio:** TRABAJO-FINAL-INTEGRADOR-TFI- Exequiel Bustos
 
 ## Qué resuelve
 
